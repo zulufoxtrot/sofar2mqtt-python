@@ -1,6 +1,13 @@
 {
     "registers": [
         {
+            "name": "serial_number",
+            "register": "0x2001",
+            "read_type": "string",
+            "registers": 7,
+            "refresh": 86400
+        },
+        {
             "name": "standby_mode",
             "register": "0x100",
             "function": "mode",
