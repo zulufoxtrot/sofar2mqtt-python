@@ -320,8 +320,8 @@ class Sofar():
                     "enabled_by_default": "true",
                     "device": {
                         "name": f"Sofar",
-                        "sw_version": self.data["sw_version_com"],
-                        "hw_version": self.data["hw_version"],
+                        "sw_version": "1234",
+                        "hw_version": "1234",
                         "manufacturer": "SOFAR",
                         "model": "HYD-6000-EP",
                         "configuration_url": "https://github.com/rjpearce/sofar2mqtt-python",
