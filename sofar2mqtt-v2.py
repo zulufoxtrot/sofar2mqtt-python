@@ -361,6 +361,7 @@ class Sofar():
         if not self.daemon:
           self.read_and_publish()
         while (self.daemon):
+            self.data['serial_number'] = '12345678'
             self.read()
             if self.iteration == 0:
                 self.publish_mqtt_discovery()
