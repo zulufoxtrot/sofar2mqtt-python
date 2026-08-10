@@ -33,7 +33,7 @@ class SofarClient:
         mqtt_user: str | None = None,
         mqtt_password: str | None = None,
         device_id: str = "sofar",
-        device_name: str = "Sofar Inverter",
+        device_name: str = "Sofar",
         poll_interval: int = 10,
         ha_discovery: bool = True,
     ):
