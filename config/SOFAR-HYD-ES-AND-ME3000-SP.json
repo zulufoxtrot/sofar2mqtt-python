@@ -599,7 +599,6 @@
       "name": "battery_cycles",
       "register": "0x22c",
       "ha": {
-        "device_class": "battery",
         "unit_of_measurement": "cycles",
         "name": "Battery Cycles",
         "icon": "mdi:battery-sync",
