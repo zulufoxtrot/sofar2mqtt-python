@@ -19,8 +19,8 @@ The main orchestrator class that coordinates all operations:
 **Key Methods:**
 - `__init__()`: Initialize clients with configuration
 - `setup()`: Load config, initialize Modbus/MQTT, set up callbacks
-- `run()`: Main polling loop (runs indefinitely, sleeps `poll_interval` between cycles)
-- `update_state()`: Process queued writes, poll inverter registers, update state
+- `run()`: Main polling loop (runs indefinitely; reads instant-power registers every `power_poll_interval` seconds and all other registers every `poll_interval` seconds, publishing state after each read cycle)
+- `update_state(poll_group=None)`: Process queued writes, poll inverter registers for the given poll group (`"power"`, `"default"`, or `None` for all), update state
 - `publish_state()`: Publish converted state to MQTT
 - `handle_write(client, userdata, message)`: MQTT `on_message` callback — validates and queues write commands; rejects writes to `passive` registers unless the inverter is in Passive mode (`_is_passive_mode()`)
 - `_is_passive_mode()`: returns True when any configured mode register currently reports `Passive mode`

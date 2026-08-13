@@ -61,6 +61,8 @@ class RegisterDefinition(BaseModel):
     write: bool = False
     read: bool = True
     refresh: int = 1  # Read every N iterations
+    # "power" = fast-poll instant-power registers, "default" = everything else
+    poll_group: Literal["power", "default"] = "default"
     notify_on_change: bool = False
     ha: HomeAssistantConfig | None = None
     desc: str | None = None

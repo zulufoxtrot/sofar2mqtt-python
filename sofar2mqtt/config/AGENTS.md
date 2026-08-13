@@ -43,6 +43,7 @@ Configuration files are stored in the `config/` directory at repository root:
       "fields": ["field1", "field2"],  // Bit field names for bit_field function
       "write": false,                  // Is this register writable?
       "refresh": 10,                   // Poll every N iterations
+      "poll_group": "default",         // "power" = instant-power register polled at the fast interval
       "ha": {                          // Home Assistant discovery config
         "name": "Display Name",
         "device_class": "power",

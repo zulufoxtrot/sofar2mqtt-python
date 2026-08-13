@@ -35,6 +35,7 @@ class SofarClient:
         device_id: str = "sofar",
         device_name: str = "Sofar",
         poll_interval: int = 10,
+        power_poll_interval: int | None = None,
         ha_discovery: bool = True,
     ):
         """Initialize Sofar client with all dependencies."""
@@ -49,6 +50,7 @@ class SofarClient:
         self.device_id = device_id
         self.device_name = device_name
         self.poll_interval = poll_interval
+        self.power_poll_interval = power_poll_interval
         self.ha_discovery = ha_discovery
 
         # Core components
@@ -61,10 +63,12 @@ class SofarClient:
         self.raw_data: dict[str, Any] = {}
         self.failures: int = 0
         self.iteration: int = 0
+        self.power_iteration: int = 0
         self.running: bool = False
         self._lock = Lock()
         self._write_registers: list[dict[str, Any]] = []
         self._last_heartbeat: float = 0.0
+        self._power_interval: int = poll_interval
 
     def setup(self) -> None:
         """Initialize all components and load configuration."""
@@ -74,6 +78,17 @@ class SofarClient:
         self.config = load_config(self.config_path)
         if not self.config:
             raise RuntimeError("Failed to load configuration")
+
+        # Resolve the instant-power polling interval:
+        # CLI arg > JSON power_poll_interval > default poll_interval
+        self._power_interval = (
+            self.power_poll_interval
+            or self.config.power_poll_interval
+            or self.poll_interval
+        )
+        logger.info(
+            f"Poll intervals: power={self._power_interval}s, default={self.poll_interval}s"
+        )
 
         # Validate write register blocks
         for i, block in enumerate(self.config.write_register_blocks or []):
@@ -342,8 +357,13 @@ class SofarClient:
         except Exception as e:
             logger.error(f"Failed to write {register.get('name')}: {e}")
 
-    def update_state(self) -> None:
-        """Read all registers and update state."""
+    def update_state(self, poll_group: str | None = None) -> None:
+        """Read registers and update state.
+
+        Args:
+            poll_group: Restrict reads to a poll group ("power" or "default").
+                None reads all registers (e.g. initial full read).
+        """
         if not self.config or not self.modbus:
             logger.error("Not configured")
             return
@@ -356,13 +376,17 @@ class SofarClient:
         for write_item in writes_to_process:
             self._write_register(write_item["register"], write_item["value"])
 
-        # Read all registers based on their refresh interval
+        # Read registers based on their poll group and refresh interval
         for register in self.config.registers:
             if not register.read:
                 continue
 
+            if poll_group and register.poll_group != poll_group:
+                continue
+
             refresh = register.refresh or 1
-            if (self.iteration % refresh) != 0:
+            iteration = self.power_iteration if poll_group == "power" else self.iteration
+            if (iteration % refresh) != 0:
                 logger.debug(f"Skipping {register.name} (refresh={refresh})")
                 continue
 
@@ -498,9 +522,13 @@ class SofarClient:
         """Main execution loop."""
         self.running = True
 
-        # Initial read
+        # Initial full read
         self.update_state()
         self.publish_state()
+
+        now = time.monotonic()
+        next_power = now + self._power_interval
+        next_default = now + self.poll_interval
 
         # Main loop
         while self.running:
@@ -511,14 +539,30 @@ class SofarClient:
                 # Send passive-mode heartbeat if required
                 self._maybe_heartbeat()
 
-                # Read and publish
-                self.update_state()
-                self.publish_state()
+                now = time.monotonic()
+                did_work = False
 
-                self.iteration += 1
+                # Read instant-power registers at the fast interval
+                if now >= next_power:
+                    self.update_state(poll_group="power")
+                    self.power_iteration += 1
+                    next_power = now + self._power_interval
+                    did_work = True
 
-                # Wait for next poll interval
-                time.sleep(self.poll_interval)
+                # Read all other registers at the slow interval
+                if now >= next_default:
+                    self.update_state(poll_group="default")
+                    self.iteration += 1
+                    next_default = now + self.poll_interval
+                    did_work = True
+
+                if did_work:
+                    self.publish_state()
+
+                # Sleep until the next poll is due, capped at 1s to stay
+                # responsive to writes, heartbeats and shutdown signals
+                sleep_for = max(0.0, min(next_power, next_default) - time.monotonic())
+                time.sleep(min(sleep_for, 1.0))
 
             except Exception as e:
                 logger.error(f"Error in main loop: {e}")

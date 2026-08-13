@@ -175,5 +175,6 @@ sofar2mqtt --config config/SOFAR-HYD-ES-AND-ME3000-SP.json --broker localhost
 | `MQTT_USERNAME` | - | MQTT username (optional) |
 | `MQTT_PASSWORD` | - | MQTT password (optional) |
 | `TTY_DEVICE` | /dev/ttyUSB0 | RS485 device path |
-| `REFRESH_INTERVAL` | 10 | Polling interval in seconds |
+| `REFRESH_INTERVAL` | 10 | Polling interval in seconds for all non-power data |
+| `POWER_REFRESH_INTERVAL` | - | Polling interval in seconds for instant-power registers (falls back to JSON `power_poll_interval`, then `REFRESH_INTERVAL`) |
 | `LOG_LEVEL` | INFO | Logging level (DEBUG/INFO/WARNING/ERROR) |

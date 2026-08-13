@@ -25,6 +25,7 @@
       },
       "write": true,
       "notify_on_change": true,
+      "poll_group": "power",
       "ha": {
         "command_topic": "sofar/rw/working_mode",
         "entity_category": "config",
@@ -82,6 +83,7 @@
       "name": "running_state",
       "register": "0x200",
       "function": "mode",
+      "poll_group": "power",
            "modes": {
         "0": "Standby",
         "2": "Charging",
@@ -217,6 +219,7 @@
     {
       "name": "batterySOC",
       "register": "0x210",
+      "poll_group": "power",
       "ha": {
         "device_class": "battery",
         "unit_of_measurement": "%",
@@ -261,6 +264,7 @@
       "function": "multiply",
       "factor": 10,
       "signed": true,
+      "poll_group": "power",
       "ha": {
         "name": "Battery Power",
         "value_template": "{{ value_json.battery_power }}",
@@ -287,6 +291,7 @@
       "register": "0x212",
       "function": "multiply",
       "factor": 10,
+      "poll_group": "power",
       "ha": {
         "device_class": "power",
         "unit_of_measurement": "W",
@@ -315,6 +320,7 @@
       "register": "0x0214",
       "function": "multiply",
       "factor": 10,
+      "poll_group": "power",
       "ha": {
         "device_class": "power",
         "unit_of_measurement": "W",
@@ -329,6 +335,7 @@
       "register": "0x215",
       "function": "multiply",
       "factor": 10,
+      "poll_group": "power",
       "ha": {
         "device_class": "power",
         "unit_of_measurement": "W",
@@ -357,6 +364,7 @@
       "register": "0x0217",
       "function": "multiply",
       "factor": 10,
+      "poll_group": "power",
       "ha": {
         "device_class": "power",
         "unit_of_measurement": "W",

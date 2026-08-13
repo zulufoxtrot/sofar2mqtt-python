@@ -67,6 +67,7 @@ Model representing a single Modbus register definition.
 | `write` | bool | Whether register is writable |
 | `read` | bool | Whether register is readable |
 | `refresh` | int | Poll frequency (every N iterations) |
+| `poll_group` | Literal["power", "default"] | Poll group: "power" registers are read at the fast power interval, "default" at the regular interval |
 | `notify_on_change` | bool | Publish only when value changes |
 | `ha` | HomeAssistantConfig \| None | Home Assistant discovery config |
 | `value` | Any \| None | Static value for static read_type |

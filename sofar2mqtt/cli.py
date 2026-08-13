@@ -19,6 +19,14 @@ logger = logging.getLogger(__name__)
     type=int,
     help="Refresh data every N seconds",
 )
+@click.option(
+    "--power-refresh-interval",
+    envvar="POWER_REFRESH_INTERVAL",
+    default=None,
+    type=int,
+    help="Refresh instant-power registers every N seconds "
+    "(falls back to JSON power_poll_interval, then --refresh-interval)",
+)
 @click.option("--broker", envvar="MQTT_HOST", default="localhost", help="MQTT broker address")
 @click.option("--port", envvar="MQTT_PORT", default=1883, type=int, help="MQTT broker port")
 @click.option("--username", envvar="MQTT_USERNAME", default=None, help="MQTT username")
@@ -39,6 +47,7 @@ logger = logging.getLogger(__name__)
 )
 def main(
     refresh_interval,
+    power_refresh_interval,
     broker,
     port,
     username,
@@ -72,6 +81,7 @@ def main(
             mqtt_user=username,
             mqtt_password=password,
             poll_interval=refresh_interval,
+            power_poll_interval=power_refresh_interval,
         )
 
         client.setup()

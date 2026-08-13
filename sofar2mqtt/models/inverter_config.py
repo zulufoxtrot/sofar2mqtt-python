@@ -14,6 +14,7 @@ class InverterConfig(BaseModel):
     write_register_blocks: list[WriteRegisterBlock] | None = None
     error_codes: dict[str, Any] | None = None
     heartbeat: HeartbeatConfig | None = None
+    power_poll_interval: int | None = None
 
     class Config:
         extra = "allow"

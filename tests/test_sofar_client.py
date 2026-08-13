@@ -448,3 +448,71 @@ class TestSofarClient:
 
         assert client.raw_data["modbus_failures"] == 2
         assert client.raw_data["modbus_iterations"] == 10
+
+    def test_update_state_power_group_reads_only_power_registers(self):
+        """Test power poll cycle only reads registers in the power group."""
+        config = make_config(
+            [
+                {"name": "battery_power", "register": "0x0100", "poll_group": "power"},
+                {"name": "solarPV", "register": "0x0101", "poll_group": "power"},
+                {"name": "grid_voltage", "register": "0x0102"},
+            ]
+        )
+        client = make_client(config)
+        client.modbus.read_register = MagicMock(return_value=42)
+
+        client.update_state(poll_group="power")
+
+        assert client.raw_data["battery_power"] == 42
+        assert client.raw_data["solarPV"] == 42
+        assert "grid_voltage" not in client.raw_data
+
+    def test_update_state_default_group_reads_only_default_registers(self):
+        """Test default poll cycle only reads non-power registers."""
+        config = make_config(
+            [
+                {"name": "battery_power", "register": "0x0100", "poll_group": "power"},
+                {"name": "grid_voltage", "register": "0x0102"},
+            ]
+        )
+        client = make_client(config)
+        client.modbus.read_register = MagicMock(return_value=42)
+
+        client.update_state(poll_group="default")
+
+        assert "battery_power" not in client.raw_data
+        assert client.raw_data["grid_voltage"] == 42
+
+    def test_update_state_power_group_uses_power_iteration_for_refresh(self):
+        """Test refresh counter is per poll group."""
+        config = make_config(
+            [
+                {
+                    "name": "battery_power",
+                    "register": "0x0100",
+                    "poll_group": "power",
+                    "refresh": 5,
+                },
+            ]
+        )
+        client = make_client(config)
+        client.modbus.read_register = MagicMock(return_value=42)
+
+        client.power_iteration = 1  # 1 % 5 != 0 -> skipped
+        client.update_state(poll_group="power")
+        assert "battery_power" not in client.raw_data
+
+        client.power_iteration = 5  # 5 % 5 == 0 -> read
+        client.update_state(poll_group="power")
+        assert client.raw_data["battery_power"] == 42
+
+    def test_power_interval_resolution(self):
+        """Test power interval fallback: CLI > JSON > poll_interval."""
+        config = make_config([])
+        config.power_poll_interval = 3
+        client = make_client(config)
+        assert client._power_interval == 3
+
+        config.power_poll_interval = None
+        client2 = make_client(config)
+        assert client2._power_interval == client2.poll_interval
