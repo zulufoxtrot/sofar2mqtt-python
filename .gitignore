@@ -1,0 +1,13 @@
+.idea
+sofar2mqtt.egg-info
+
+venv
+
+# Python bytecode
+__pycache__/
+*.pyc
+
+# agents
+.opencode
+/CLAUDE.md
+/.claude

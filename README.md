@@ -13,6 +13,10 @@ It allows you to read and write data to Sofar inverters using a prebuilt Docker 
 
 ## Release notes
 
+### Next
+
+* Polling is now split into two intervals: instant-power registers (e.g. `battery_power`, `solarPV`, `grid_power`, `inverter_power`, `eps_output_power`, `batterySOC`, `working_mode`, `running_state`) are polled at the `POWER_REFRESH_INTERVAL` (fast), all other registers at `REFRESH_INTERVAL` (slow). Registers are assigned to the power group via the `"poll_group": "power"` field in the JSON config, and the power interval falls back to JSON `power_poll_interval`, then to `REFRESH_INTERVAL`. See [AGENTS.md](AGENTS.md).
+
 ### 3.0.1
 
 * Implemented MQTT auto discovery for home assistant - no more manual config!

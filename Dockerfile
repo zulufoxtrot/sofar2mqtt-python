@@ -1,29 +1,40 @@
-FROM python:3.13.7-alpine3.22@sha256:9ba6d8cbebf0fb6546ae71f2a1c14f6ffd2fdab83af7fa5669734ef30ad48844
+FROM python:3.14-slim
 
 WORKDIR /opt/sofar2mqtt
 
-COPY requirements.txt sofar2mqtt-v2.py *.json ./
+# Upgrade pip and install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libffi-dev \
+    libc6-dev \
+    && rm -rf /var/lib/apt/lists/* \
+    && pip install --upgrade pip
 
-ARG TARGETOS
-ARG TARGETARCH
+# Copy project files
+COPY pyproject.toml README.md ./
+COPY sofar2mqtt ./sofar2mqtt/
 
-RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} pip install --no-cache-dir -r requirements.txt
+# Install project in editable mode to avoid path issues
+RUN pip install --no-cache-dir -e .
 
-ENV CONFIG_FILE=sofar-hyd-ep.json \
-    DAEMON=True \
+# Copy config files
+COPY config/*.json ./
+
+# Create a non-root user for security and add to dialout group for serial access
+RUN useradd -m -u 1000 appuser && \
+    usermod -aG dialout appuser && \
+    chown -R appuser:appuser /opt/sofar2mqtt
+
+USER appuser
+
+ENV CONFIG_FILE= \
     LOG_LEVEL=INFO \
-    MQTT_HOST= \
+    MQTT_HOST=localhost \
     MQTT_PASSWORD= \
     MQTT_PORT=1883 \
     MQTT_TOPIC=sofar/ \
     MQTT_USERNAME= \
     MQTT_WRITE_TOPIC=sofar/rw \
-    REFRESH_INTERVAL=1 \
-    RETRY_ATTEMPT=2 \
-    RETRY_DELAY=0.1 \
-    TTY_DEVICE= \
-    WRITE_RETRY_ATTEMPTS=5 \
-    WRITE_RETRY_DELAY=5 
-
-CMD [ "python", "sofar2mqtt-v2.py" ]
-
+    TTY_DEVICE=/dev/ttyUSB0 \
+    REFRESH_INTERVAL=1
+CMD ["sofar2mqtt"]
